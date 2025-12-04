@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Settings, TrainFrontTunnel, ArrowLeft, RotateCcw } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Settings, TrainFrontTunnel, ArrowLeft, RotateCcw, Wifi } from 'lucide-react';
 import { TrainData } from './types';
 import TrainHero from './components/TrainHero';
 import LiveStatusCard from './components/LiveStatusCard';
@@ -25,9 +25,11 @@ const App: React.FC = () => {
   // Data States
   const [searchQuery, setSearchQuery] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(false);
+  const [isBackgroundUpdating, setIsBackgroundUpdating] = useState(false);
   const [trainData, setTrainData] = useState<TrainData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   // Apply Dark Mode Class
   useEffect(() => {
@@ -44,15 +46,18 @@ const App: React.FC = () => {
     localStorage.setItem('cipherTrack_compactMode', JSON.stringify(isCompactMode));
   }, [isCompactMode]);
 
-  const fetchTrainData = async (trainNo: string) => {
-    setIsLoading(true);
-    setError(null);
-    setTrainData(null);
+  const fetchTrainData = useCallback(async (trainNo: string, isBackground: boolean = false) => {
+    if (!isBackground) {
+      setIsInitialLoading(true);
+      setError(null);
+    } else {
+      setIsBackgroundUpdating(true);
+    }
 
     try {
       // Using AllOrigins proxy to bypass CORS for the RailYatri API
       const targetUrl = `https://livestatus.railyatri.in/api/v3/train_eta_data/${trainNo}/0.json?start_day=0`;
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}&timestamp=${new Date().getTime()}`;
 
       const response = await fetch(proxyUrl);
       if (!response.ok) throw new Error('Network response was not ok');
@@ -65,15 +70,40 @@ const App: React.FC = () => {
       }
 
       setTrainData(jsonData);
-      setHasSearched(true);
-      setSearchQuery(trainNo);
+      if (!isBackground) {
+        setHasSearched(true);
+        setSearchQuery(trainNo);
+      }
+      setLastUpdated(new Date());
     } catch (err) {
       console.error(err);
-      setError('Could not fetch train status. Please check the train number and try again.');
+      if (!isBackground) {
+        setError('Could not fetch train status. Please check the train number and try again.');
+      }
     } finally {
-      setIsLoading(false);
+      if (!isBackground) {
+        setIsInitialLoading(false);
+      } else {
+        setIsBackgroundUpdating(false);
+      }
     }
-  };
+  }, []);
+
+  // Auto-refresh logic (every 30 seconds)
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    
+    if (hasSearched && trainData && !error) {
+      interval = setInterval(() => {
+        console.log('Auto-refreshing data...');
+        fetchTrainData(searchQuery, true);
+      }, 30000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [hasSearched, trainData, error, searchQuery, fetchTrainData]);
 
   const handleBack = () => {
     setHasSearched(false);
@@ -83,7 +113,7 @@ const App: React.FC = () => {
 
   const handleRefresh = () => {
     if (searchQuery) {
-        fetchTrainData(searchQuery);
+        fetchTrainData(searchQuery, false);
     }
   };
 
@@ -92,7 +122,7 @@ const App: React.FC = () => {
       
       {/* Navigation Bar */}
       <nav className="fixed top-0 w-full z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
-        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={handleBack}>
             <div className="bg-indigo-600 p-1.5 rounded-lg text-white">
                <TrainFrontTunnel size={20} />
@@ -104,13 +134,18 @@ const App: React.FC = () => {
           
           <div className="flex items-center gap-2">
             {hasSearched && (
+              <div className="flex items-center gap-2 mr-2">
+                 {isBackgroundUpdating && (
+                   <span className="flex h-2 w-2 rounded-full bg-indigo-500 animate-ping"></span>
+                 )}
                  <button 
                   onClick={handleRefresh}
-                  className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
+                  className={`p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors ${isBackgroundUpdating ? 'opacity-50' : ''}`}
                   title="Refresh Data"
                 >
-                  <RotateCcw size={20} className={isLoading ? "animate-spin" : ""} />
+                  <RotateCcw size={20} className={isInitialLoading || isBackgroundUpdating ? "animate-spin" : ""} />
                 </button>
+              </div>
             )}
             <button 
               onClick={() => setIsSettingsOpen(true)}
@@ -123,7 +158,7 @@ const App: React.FC = () => {
       </nav>
 
       {/* Main Content */}
-      <main className="pt-24 pb-12 px-4 max-w-4xl mx-auto min-h-[calc(100vh-80px)]">
+      <main className="pt-24 pb-12 px-4 max-w-6xl mx-auto min-h-[calc(100vh-80px)]">
         
         {/* Settings Modal */}
         <SettingsModal 
@@ -137,9 +172,9 @@ const App: React.FC = () => {
 
         {!hasSearched ? (
           /* Search View */
-          <div className="animate-fade-in">
-             <SearchScreen onSearch={fetchTrainData} />
-             {isLoading && (
+          <div className="animate-fade-in max-w-2xl mx-auto">
+             <SearchScreen onSearch={(no) => fetchTrainData(no, false)} />
+             {isInitialLoading && (
                  <div className="mt-8 flex flex-col items-center justify-center text-slate-500">
                      <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-2"></div>
                      <p>Locating Train...</p>
@@ -154,9 +189,17 @@ const App: React.FC = () => {
         ) : trainData ? (
           /* Results View */
           <div className="space-y-6 animate-fade-in-up">
-            <div className="flex items-center gap-2 mb-2 text-slate-500 hover:text-indigo-600 cursor-pointer w-fit transition-colors" onClick={handleBack}>
-                <ArrowLeft size={16} />
-                <span className="text-sm font-medium">Search another train</span>
+            <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 cursor-pointer transition-colors" onClick={handleBack}>
+                    <ArrowLeft size={16} />
+                    <span className="text-sm font-medium">Search another train</span>
+                </div>
+                {lastUpdated && (
+                    <div className="text-xs text-slate-400 flex items-center gap-1">
+                        <Wifi size={12} />
+                        Live Updates On (30s)
+                    </div>
+                )}
             </div>
 
             {/* Hero Section */}
@@ -165,7 +208,7 @@ const App: React.FC = () => {
             {/* Live Status Card */}
             <LiveStatusCard data={trainData} />
 
-            {/* Timeline */}
+            {/* Timeline - Horizontal Level System */}
             <Timeline data={trainData} compact={isCompactMode} />
           </div>
         ) : (
