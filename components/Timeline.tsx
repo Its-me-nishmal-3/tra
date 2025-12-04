@@ -28,8 +28,8 @@ const Timeline: React.FC<TimelineProps> = ({ data, compact }) => {
   }, [data]);
 
   // Constants for visual layout
-  const STATION_WIDTH = compact ? 120 : 160;
-  const START_PADDING = 50; // Padding at start of track
+  const STATION_WIDTH = compact ? 130 : 160; // Increased slightly for wider cards
+  const START_PADDING = 60; 
 
   // Calculate Train Position
   const trainPosition = useMemo(() => {
@@ -118,7 +118,7 @@ const Timeline: React.FC<TimelineProps> = ({ data, compact }) => {
         <div 
             className="relative h-full flex items-center"
             style={{ 
-                width: `${allStations.length * STATION_WIDTH + 100}px`,
+                width: `${allStations.length * STATION_WIDTH + 120}px`,
                 paddingLeft: `${START_PADDING}px` 
             }}
         >
@@ -157,28 +157,44 @@ const Timeline: React.FC<TimelineProps> = ({ data, compact }) => {
 
                         {/* Station Card (Alternating Top/Bottom) */}
                         <div className={`
-                            absolute w-28 flex flex-col items-center text-center transition-all duration-300
-                            ${index % 2 === 0 ? '-top-24 justify-end pb-3' : '-bottom-24 justify-start pt-3'}
-                            ${isPassed ? 'opacity-60 grayscale hover:opacity-100 hover:grayscale-0' : 'opacity-100'}
+                            absolute w-32 flex flex-col items-center text-center transition-all duration-300 z-20
+                            ${index % 2 === 0 ? '-top-28 justify-end pb-5' : '-bottom-28 justify-start pt-5'}
+                            ${isPassed ? 'opacity-70 grayscale-[0.5] hover:opacity-100 hover:grayscale-0' : 'opacity-100'}
                         `}>
                             {/* Connecting Line to Node */}
                             <div className={`
                                 absolute left-1/2 -translate-x-1/2 w-[1px] bg-slate-300 dark:bg-slate-700
-                                ${index % 2 === 0 ? 'top-full h-3' : 'bottom-full h-3'}
+                                ${index % 2 === 0 ? 'top-full h-5' : 'bottom-full h-5'}
                             `}></div>
 
-                            <div className="bg-white dark:bg-slate-800 p-2 rounded-lg shadow-sm border border-slate-100 dark:border-slate-700 w-full hover:shadow-md hover:scale-105 transition-all duration-200">
-                                <h4 className="text-[10px] font-bold text-slate-800 dark:text-white truncate w-full leading-tight" title={station.station_name}>
-                                    {station.station_name}
-                                </h4>
-                                <div className="text-[9px] text-slate-400 mt-0.5 font-mono">
-                                    {station.station_code}
+                            <div className="bg-white dark:bg-slate-800 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 w-full hover:shadow-md hover:scale-105 transition-all duration-200 text-left">
+                                <div className="flex justify-between items-start mb-1.5">
+                                    <h4 className="text-[10px] font-bold text-slate-800 dark:text-white truncate w-16 leading-tight" title={station.station_name}>
+                                        {station.station_name}
+                                    </h4>
+                                    <div className="text-[9px] font-mono text-slate-400 bg-slate-50 dark:bg-slate-700/50 px-1 rounded">
+                                         {station.station_code}
+                                    </div>
                                 </div>
-                                <div className="mt-1 flex justify-between items-center text-[9px] w-full border-t border-slate-100 dark:border-slate-700 pt-1">
-                                    <span className={station.arrival_delay > 0 ? "text-amber-600 font-bold" : "text-emerald-600 font-bold"}>
-                                        {station.eta}
-                                    </span>
-                                    <span className="text-slate-400">{station.distance_from_source}km</span>
+
+                                <div className="grid grid-cols-2 gap-2 pt-1.5 border-t border-slate-100 dark:border-slate-700/50">
+                                    <div>
+                                        <span className="text-[8px] text-slate-400 uppercase block tracking-wider">Arr</span>
+                                        <span className={`text-[10px] font-bold leading-tight ${station.arrival_delay > 0 ? "text-amber-600 dark:text-amber-500" : "text-slate-700 dark:text-slate-300"}`}>
+                                            {station.eta || '--:--'}
+                                        </span>
+                                    </div>
+                                    <div className="text-right">
+                                         <span className="text-[8px] text-slate-400 uppercase block tracking-wider">Dep</span>
+                                         <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 leading-tight">
+                                            {station.etd || '--:--'}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div className="mt-1.5 pt-1 border-t border-slate-50 dark:border-slate-800 flex justify-between items-center">
+                                     <span className="text-[8px] text-slate-400">{station.distance_from_source} km</span>
+                                     {station.halt > 0 && <span className="text-[8px] text-indigo-500 font-medium">{station.halt}m Halt</span>}
                                 </div>
                             </div>
                         </div>

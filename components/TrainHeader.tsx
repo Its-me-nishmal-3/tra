@@ -8,10 +8,11 @@ interface TrainHeaderProps {
 
 const TrainHeader: React.FC<TrainHeaderProps> = ({ data }) => {
   const isDelayed = data.delay > 10;
+  const nextStation = data.upcoming_stations && data.upcoming_stations.length > 0 ? data.upcoming_stations[0] : null;
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 shrink-0 transition-colors duration-300">
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3">
         
         {/* Top Row: Train Identity & Status */}
         <div className="flex items-start justify-between gap-2">
@@ -57,8 +58,21 @@ const TrainHeader: React.FC<TrainHeaderProps> = ({ data }) => {
                 <div className="font-bold text-slate-700 dark:text-slate-200 text-sm truncate" title={data.current_station_name}>
                     {data.current_station_name.replace('~', '')}
                 </div>
-                <div className="text-[10px] text-blue-600 dark:text-blue-400 truncate font-medium">
+                <div className="text-[10px] text-blue-600 dark:text-blue-400 truncate font-medium mb-1.5">
                     {data.ahead_distance_text}
+                </div>
+                
+                {/* Current Station Times */}
+                <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-1.5 rounded-lg border border-slate-100 dark:border-slate-800/50 w-fit">
+                    <div className="flex flex-col leading-none">
+                        <span className="text-[7px] text-slate-400 uppercase font-semibold">Arr</span>
+                        <span className="text-[9px] font-bold text-slate-700 dark:text-slate-300">{data.eta || '--:--'}</span>
+                    </div>
+                    <div className="w-px h-3 bg-slate-200 dark:bg-slate-700"></div>
+                    <div className="flex flex-col leading-none">
+                        <span className="text-[7px] text-slate-400 uppercase font-semibold">Dep</span>
+                        <span className="text-[9px] font-bold text-slate-700 dark:text-slate-300">{data.etd || '--:--'}</span>
+                    </div>
                 </div>
             </div>
 
@@ -71,9 +85,26 @@ const TrainHeader: React.FC<TrainHeaderProps> = ({ data }) => {
                 <div className="font-bold text-slate-700 dark:text-slate-200 text-sm truncate" title={data.next_stoppage_info?.next_stoppage}>
                     {data.next_stoppage_info?.next_stoppage || "N/A"}
                 </div>
-                <div className="text-[10px] text-purple-600 dark:text-purple-400 truncate font-medium">
+                <div className="text-[10px] text-purple-600 dark:text-purple-400 truncate font-medium mb-1.5">
                     {data.next_stoppage_info?.next_stoppage_time_diff || "--"}
                 </div>
+
+                {/* Next Station Times */}
+                {nextStation ? (
+                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-1.5 rounded-lg border border-slate-100 dark:border-slate-800/50 w-fit">
+                        <div className="flex flex-col leading-none">
+                            <span className="text-[7px] text-slate-400 uppercase font-semibold">Arr</span>
+                            <span className="text-[9px] font-bold text-slate-700 dark:text-slate-300">{nextStation.eta || '--:--'}</span>
+                        </div>
+                        <div className="w-px h-3 bg-slate-200 dark:bg-slate-700"></div>
+                        <div className="flex flex-col leading-none">
+                            <span className="text-[7px] text-slate-400 uppercase font-semibold">Dep</span>
+                            <span className="text-[9px] font-bold text-slate-700 dark:text-slate-300">{nextStation.etd || '--:--'}</span>
+                        </div>
+                    </div>
+                ) : (
+                   <div className="h-[27px]"></div> /* Placeholder for alignment */
+                )}
             </div>
         </div>
 
