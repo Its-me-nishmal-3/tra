@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Settings, TrainFrontTunnel, ArrowLeft, RotateCcw, Wifi } from 'lucide-react';
 import { TrainData } from './types';
-import TrainHero from './components/TrainHero';
-import LiveStatusCard from './components/LiveStatusCard';
+import TrainHeader from './components/TrainHeader';
 import Timeline from './components/Timeline';
 import Footer from './components/Footer';
 import SettingsModal from './components/SettingsModal';
@@ -121,24 +120,24 @@ const App: React.FC = () => {
     <div className={`h-screen w-full overflow-hidden transition-colors duration-300 flex flex-col ${isDarkMode ? 'dark bg-slate-950' : 'bg-gray-50'}`}>
       
       {/* Navigation Bar */}
-      <nav className="shrink-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 h-16">
+      <nav className="shrink-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 h-14 sm:h-16">
         <div className="max-w-[1920px] mx-auto px-4 h-full flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={handleBack}>
             <div className="bg-indigo-600 p-1.5 rounded-lg text-white">
-               <TrainFrontTunnel size={20} />
+               <TrainFrontTunnel size={18} className="sm:w-5 sm:h-5" />
             </div>
-            <span className="font-bold text-xl tracking-tight text-slate-800 dark:text-white hidden sm:block">
+            <span className="font-bold text-lg sm:text-xl tracking-tight text-slate-800 dark:text-white block">
               Cipher<span className="text-indigo-600 dark:text-indigo-400">Track</span>
             </span>
           </div>
           
           <div className="flex items-center gap-2">
             {hasSearched && (
-              <div className="flex items-center gap-2 mr-2">
+              <div className="flex items-center gap-2 mr-1 sm:mr-2">
                  {isBackgroundUpdating && (
-                   <div className="flex items-center gap-2 px-3 py-1 bg-indigo-50 dark:bg-indigo-900/20 rounded-full">
+                   <div className="flex items-center gap-1.5 px-2 py-1 bg-indigo-50 dark:bg-indigo-900/20 rounded-full">
                       <span className="flex h-1.5 w-1.5 rounded-full bg-indigo-500 animate-ping"></span>
-                      <span className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">Updating</span>
+                      <span className="text-[10px] sm:text-xs text-indigo-600 dark:text-indigo-400 font-medium hidden sm:inline">Updating</span>
                    </div>
                  )}
                  <button 
@@ -146,7 +145,7 @@ const App: React.FC = () => {
                   className={`p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors ${isBackgroundUpdating ? 'opacity-50' : ''}`}
                   title="Refresh Data"
                 >
-                  <RotateCcw size={20} className={isInitialLoading || isBackgroundUpdating ? "animate-spin" : ""} />
+                  <RotateCcw size={18} className={isInitialLoading || isBackgroundUpdating ? "animate-spin" : "sm:w-5 sm:h-5"} />
                 </button>
               </div>
             )}
@@ -154,7 +153,7 @@ const App: React.FC = () => {
               onClick={() => setIsSettingsOpen(true)}
               className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
             >
-              <Settings size={20} />
+              <Settings size={18} className="sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>
@@ -205,18 +204,15 @@ const App: React.FC = () => {
                     <span className="text-sm font-medium">Search another</span>
                 </div>
                 {lastUpdated && (
-                    <div className="text-xs text-slate-400 flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-1 rounded-full border border-slate-100 dark:border-slate-800 shadow-sm">
-                        <Wifi size={12} className="text-emerald-500" />
-                        <span>Live (30s)</span>
+                    <div className="text-[10px] text-slate-400 flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-1 rounded-full border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <Wifi size={10} className="text-emerald-500" />
+                        <span>Live</span>
                     </div>
                 )}
             </div>
 
-            {/* Upper Dashboard Section: Train Info & Status Cards */}
-            <div className="shrink-0 grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-4">
-                <TrainHero data={trainData} compact={true} />
-                <LiveStatusCard data={trainData} />
-            </div>
+            {/* Upper Dashboard Section: Merged Header */}
+            <TrainHeader data={trainData} />
 
             {/* Lower Dashboard Section: Timeline (Fills remaining space) */}
             <div className="flex-1 min-h-0 relative">
@@ -224,8 +220,8 @@ const App: React.FC = () => {
             </div>
             
             {/* Mini Footer embedded for this view */}
-            <div className="shrink-0 text-center">
-                 <p className="text-[10px] text-slate-300 dark:text-slate-600">Powered by CipherNichu</p>
+            <div className="shrink-0 text-center py-1">
+                 <p className="text-[9px] text-slate-300 dark:text-slate-600">Powered by CipherNichu</p>
             </div>
           </div>
         ) : (
