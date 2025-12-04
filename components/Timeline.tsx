@@ -12,7 +12,6 @@ const Timeline: React.FC<TimelineProps> = ({ data, compact }) => {
   const [hasScrolledInitial, setHasScrolledInitial] = useState(false);
 
   // Combine and sort stations based on distance to ensure correct order
-  // RailYatri API usually gives them separated, we merge to create the full "Level Map"
   const allStations = useMemo(() => {
     // Merge arrays
     const rawStations = [...data.previous_stations, ...data.upcoming_stations];
@@ -29,11 +28,10 @@ const Timeline: React.FC<TimelineProps> = ({ data, compact }) => {
   }, [data]);
 
   // Constants for visual layout
-  const STATION_WIDTH = compact ? 140 : 180;
+  const STATION_WIDTH = compact ? 120 : 160;
   const START_PADDING = 50; // Padding at start of track
 
   // Calculate Train Position
-  // We use distance to interpolate position between stations
   const trainPosition = useMemo(() => {
     const currentDist = data.distance_from_source;
     
@@ -66,7 +64,6 @@ const Timeline: React.FC<TimelineProps> = ({ data, compact }) => {
         : 0;
     
     // Calculate pixel position
-    // Index * Width + (Percentage * Width) + Padding
     return START_PADDING + (prevStationIndex * STATION_WIDTH) + (progress * STATION_WIDTH);
 
   }, [data, allStations, STATION_WIDTH]);
@@ -93,24 +90,30 @@ const Timeline: React.FC<TimelineProps> = ({ data, compact }) => {
   }, [data.train_number]);
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 overflow-hidden flex flex-col transition-all duration-300">
+    <div className="h-full bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-800 overflow-hidden flex flex-col transition-all duration-300 min-h-[200px]">
       
       {/* Header */}
-      <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm flex justify-between items-center z-10">
-        <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-          <MapPin size={20} className="text-indigo-500" />
+      <div className="shrink-0 px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm flex justify-between items-center z-10">
+        <h3 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
+          <MapPin size={16} className="text-indigo-500" />
           Live Route
         </h3>
-        <div className="flex items-center gap-2 text-xs text-slate-500">
-           <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-           <span>Live Update</span>
+        <div className="hidden sm:flex items-center gap-4 text-[10px] text-slate-500 font-medium">
+             <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-indigo-600"></div>
+                  <span>Passed</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full border border-slate-400 bg-white dark:bg-slate-800"></div>
+                  <span>Upcoming</span>
+              </div>
         </div>
       </div>
 
       {/* Horizontal Scroll Container */}
       <div 
         ref={scrollContainerRef}
-        className="relative h-[320px] overflow-x-auto overflow-y-hidden custom-scrollbar bg-slate-50/50 dark:bg-slate-900/50 scroll-smooth select-none"
+        className="flex-1 relative overflow-x-auto overflow-y-hidden custom-scrollbar bg-slate-50/50 dark:bg-slate-900/50 scroll-smooth select-none"
       >
         <div 
             className="relative h-full flex items-center"
@@ -120,7 +123,7 @@ const Timeline: React.FC<TimelineProps> = ({ data, compact }) => {
             }}
         >
             {/* The Track (Chain) */}
-            <div className="absolute left-0 right-0 h-3 top-1/2 -translate-y-1/2 bg-slate-200 dark:bg-slate-800 mx-4 rounded-full overflow-hidden">
+            <div className="absolute left-0 right-0 h-2 top-1/2 -translate-y-1/2 bg-slate-200 dark:bg-slate-800 mx-4 rounded-full overflow-hidden">
                 {/* Progress Fill */}
                 <div 
                     className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-indigo-400 transition-all duration-1000 ease-linear"
@@ -131,8 +134,7 @@ const Timeline: React.FC<TimelineProps> = ({ data, compact }) => {
             {/* Stations (Nodes) */}
             {allStations.map((station, index) => {
                 const isPassed = index * STATION_WIDTH + START_PADDING < trainPosition;
-                const isNext = !isPassed && (index * STATION_WIDTH + START_PADDING) > trainPosition && (index === 0 || (index > 0 && ((index-1) * STATION_WIDTH + START_PADDING) <= trainPosition));
-
+                
                 return (
                     <div 
                         key={station.station_code}
@@ -141,41 +143,38 @@ const Timeline: React.FC<TimelineProps> = ({ data, compact }) => {
                     >
                         {/* Station Node Point */}
                         <div className={`
-                            relative z-10 h-6 w-6 rounded-full border-4 transition-all duration-300
+                            relative z-10 h-4 w-4 rounded-full border-[3px] transition-all duration-300
                             ${isPassed 
                                 ? 'bg-indigo-600 border-indigo-100 dark:border-indigo-900 scale-100' 
                                 : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 scale-90'
                             }
                             group-hover:scale-125 group-hover:border-indigo-400
                         `}>
-                            {isPassed && (
-                                <div className="absolute inset-0 bg-indigo-600 rounded-full"></div>
-                            )}
                         </div>
 
                         {/* Connection Dot Overlay for cleaner look */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-10 w-10 bg-transparent z-20 cursor-pointer" title={station.station_name}></div>
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-8 bg-transparent z-20 cursor-pointer" title={station.station_name}></div>
 
                         {/* Station Card (Alternating Top/Bottom) */}
                         <div className={`
-                            absolute w-32 flex flex-col items-center text-center transition-all duration-300
-                            ${index % 2 === 0 ? '-top-32 justify-end pb-4' : '-bottom-32 justify-start pt-4'}
-                            ${isPassed ? 'opacity-50 grayscale hover:opacity-100 hover:grayscale-0' : 'opacity-100'}
+                            absolute w-28 flex flex-col items-center text-center transition-all duration-300
+                            ${index % 2 === 0 ? '-top-24 justify-end pb-3' : '-bottom-24 justify-start pt-3'}
+                            ${isPassed ? 'opacity-60 grayscale hover:opacity-100 hover:grayscale-0' : 'opacity-100'}
                         `}>
                             {/* Connecting Line to Node */}
                             <div className={`
-                                absolute left-1/2 -translate-x-1/2 w-0.5 bg-slate-300 dark:bg-slate-700
-                                ${index % 2 === 0 ? 'top-full h-4' : 'bottom-full h-4'}
+                                absolute left-1/2 -translate-x-1/2 w-[1px] bg-slate-300 dark:bg-slate-700
+                                ${index % 2 === 0 ? 'top-full h-3' : 'bottom-full h-3'}
                             `}></div>
 
-                            <div className="bg-white dark:bg-slate-800 p-3 rounded-xl shadow-md border border-slate-100 dark:border-slate-700 w-full hover:scale-105 transition-transform duration-200">
-                                <h4 className="text-xs font-bold text-slate-800 dark:text-white truncate w-full" title={station.station_name}>
+                            <div className="bg-white dark:bg-slate-800 p-2 rounded-lg shadow-sm border border-slate-100 dark:border-slate-700 w-full hover:shadow-md hover:scale-105 transition-all duration-200">
+                                <h4 className="text-[10px] font-bold text-slate-800 dark:text-white truncate w-full leading-tight" title={station.station_name}>
                                     {station.station_name}
                                 </h4>
-                                <div className="flex items-center justify-center gap-1 text-[10px] text-slate-500 mt-1 font-mono bg-slate-100 dark:bg-slate-700/50 rounded px-1.5 py-0.5">
-                                    <span>{station.station_code}</span>
+                                <div className="text-[9px] text-slate-400 mt-0.5 font-mono">
+                                    {station.station_code}
                                 </div>
-                                <div className="mt-2 flex justify-between items-center text-[10px] w-full border-t border-slate-100 dark:border-slate-700 pt-1.5">
+                                <div className="mt-1 flex justify-between items-center text-[9px] w-full border-t border-slate-100 dark:border-slate-700 pt-1">
                                     <span className={station.arrival_delay > 0 ? "text-amber-600 font-bold" : "text-emerald-600 font-bold"}>
                                         {station.eta}
                                     </span>
@@ -201,36 +200,19 @@ const Timeline: React.FC<TimelineProps> = ({ data, compact }) => {
                     <div className="absolute inset-0 bg-indigo-500 rounded-full animate-ping opacity-20"></div>
                     
                     {/* Train Icon Wrapper */}
-                    <div className="relative h-12 w-12 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-full shadow-xl shadow-indigo-500/40 border-2 border-white dark:border-slate-800 flex items-center justify-center transform rotate-0 hover:scale-110 transition-transform cursor-grab active:cursor-grabbing">
-                        <TrainFrontTunnel size={24} className="text-white drop-shadow-md" />
+                    <div className="relative h-8 w-8 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-full shadow-lg shadow-indigo-500/40 border-2 border-white dark:border-slate-800 flex items-center justify-center transform hover:scale-110 transition-transform cursor-grab active:cursor-grabbing">
+                        <TrainFrontTunnel size={14} className="text-white" />
                     </div>
 
                     {/* Tooltip: Current status */}
-                    <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded-md whitespace-nowrap shadow-lg">
-                        {data.delay > 0 ? `Delayed ${data.delay}m` : 'On Time'}
-                        <div className="absolute bottom-[-4px] left-1/2 -translate-x-1/2 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-slate-900"></div>
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-lg whitespace-nowrap">
+                        {data.delay > 0 ? `+${data.delay} min` : 'On Time'}
+                         <div className="absolute bottom-[-3px] left-1/2 -translate-x-1/2 border-l-3 border-l-transparent border-r-3 border-r-transparent border-t-3 border-t-slate-900"></div>
                     </div>
                 </div>
             </div>
 
         </div>
-      </div>
-      
-      {/* Legend / Info Footer */}
-      <div className="bg-slate-50 dark:bg-slate-900/80 px-6 py-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-xs text-slate-500">
-          <div className="flex gap-4">
-              <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-indigo-600"></div>
-                  <span>Passed</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full border border-slate-400 bg-white dark:bg-slate-800"></div>
-                  <span>Upcoming</span>
-              </div>
-          </div>
-          <div className="hidden sm:block">
-              Scroll to view full route
-          </div>
       </div>
     </div>
   );

@@ -118,16 +118,16 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'dark bg-slate-950' : 'bg-gray-50'}`}>
+    <div className={`h-screen w-full overflow-hidden transition-colors duration-300 flex flex-col ${isDarkMode ? 'dark bg-slate-950' : 'bg-gray-50'}`}>
       
       {/* Navigation Bar */}
-      <nav className="fixed top-0 w-full z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <nav className="shrink-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 h-16">
+        <div className="max-w-[1920px] mx-auto px-4 h-full flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={handleBack}>
             <div className="bg-indigo-600 p-1.5 rounded-lg text-white">
                <TrainFrontTunnel size={20} />
             </div>
-            <span className="font-bold text-xl tracking-tight text-slate-800 dark:text-white">
+            <span className="font-bold text-xl tracking-tight text-slate-800 dark:text-white hidden sm:block">
               Cipher<span className="text-indigo-600 dark:text-indigo-400">Track</span>
             </span>
           </div>
@@ -136,7 +136,10 @@ const App: React.FC = () => {
             {hasSearched && (
               <div className="flex items-center gap-2 mr-2">
                  {isBackgroundUpdating && (
-                   <span className="flex h-2 w-2 rounded-full bg-indigo-500 animate-ping"></span>
+                   <div className="flex items-center gap-2 px-3 py-1 bg-indigo-50 dark:bg-indigo-900/20 rounded-full">
+                      <span className="flex h-1.5 w-1.5 rounded-full bg-indigo-500 animate-ping"></span>
+                      <span className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">Updating</span>
+                   </div>
                  )}
                  <button 
                   onClick={handleRefresh}
@@ -157,8 +160,8 @@ const App: React.FC = () => {
         </div>
       </nav>
 
-      {/* Main Content */}
-      <main className="pt-24 pb-12 px-4 max-w-6xl mx-auto min-h-[calc(100vh-80px)]">
+      {/* Main Content Area */}
+      <main className="flex-1 overflow-hidden relative">
         
         {/* Settings Modal */}
         <SettingsModal 
@@ -171,55 +174,67 @@ const App: React.FC = () => {
         />
 
         {!hasSearched ? (
-          /* Search View */
-          <div className="animate-fade-in max-w-2xl mx-auto">
-             <SearchScreen onSearch={(no) => fetchTrainData(no, false)} />
-             {isInitialLoading && (
-                 <div className="mt-8 flex flex-col items-center justify-center text-slate-500">
-                     <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-2"></div>
-                     <p>Locating Train...</p>
-                 </div>
-             )}
-             {error && (
-                 <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 text-center max-w-md mx-auto animate-fade-in-up">
-                     {error}
-                 </div>
-             )}
+          /* Search View - Centered and Scrollable if needed */
+          <div className="h-full w-full overflow-y-auto flex flex-col">
+             <div className="flex-1 flex flex-col items-center justify-center p-4">
+                <SearchScreen onSearch={(no) => fetchTrainData(no, false)} />
+                {isInitialLoading && (
+                    <div className="mt-8 flex flex-col items-center justify-center text-slate-500">
+                        <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+                        <p>Locating Train...</p>
+                    </div>
+                )}
+                {error && (
+                    <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 text-center max-w-md mx-auto animate-fade-in-up">
+                        {error}
+                    </div>
+                )}
+             </div>
+             <div className="shrink-0 pb-6">
+                 <Footer />
+             </div>
           </div>
         ) : trainData ? (
-          /* Results View */
-          <div className="space-y-6 animate-fade-in-up">
-            <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 cursor-pointer transition-colors" onClick={handleBack}>
-                    <ArrowLeft size={16} />
-                    <span className="text-sm font-medium">Search another train</span>
+          /* Results View - Dashboard Layout (100vh locked) */
+          <div className="h-full w-full flex flex-col p-2 sm:p-4 gap-2 sm:gap-4 max-w-[1920px] mx-auto animate-fade-in-up">
+            
+            {/* Top Bar: Back Link & Last Update */}
+            <div className="flex items-center justify-between shrink-0 px-1">
+                <div className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 cursor-pointer transition-colors group" onClick={handleBack}>
+                    <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+                    <span className="text-sm font-medium">Search another</span>
                 </div>
                 {lastUpdated && (
-                    <div className="text-xs text-slate-400 flex items-center gap-1">
-                        <Wifi size={12} />
-                        Live Updates On (30s)
+                    <div className="text-xs text-slate-400 flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-1 rounded-full border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <Wifi size={12} className="text-emerald-500" />
+                        <span>Live (30s)</span>
                     </div>
                 )}
             </div>
 
-            {/* Hero Section */}
-            <TrainHero data={trainData} compact={isCompactMode} />
+            {/* Upper Dashboard Section: Train Info & Status Cards */}
+            <div className="shrink-0 grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-4">
+                <TrainHero data={trainData} compact={true} />
+                <LiveStatusCard data={trainData} />
+            </div>
 
-            {/* Live Status Card */}
-            <LiveStatusCard data={trainData} />
-
-            {/* Timeline - Horizontal Level System */}
-            <Timeline data={trainData} compact={isCompactMode} />
+            {/* Lower Dashboard Section: Timeline (Fills remaining space) */}
+            <div className="flex-1 min-h-0 relative">
+               <Timeline data={trainData} compact={isCompactMode} />
+            </div>
+            
+            {/* Mini Footer embedded for this view */}
+            <div className="shrink-0 text-center">
+                 <p className="text-[10px] text-slate-300 dark:text-slate-600">Powered by CipherNichu</p>
+            </div>
           </div>
         ) : (
-           /* Loading State for Results (should rarely hit this due to logic above) */
-           <div className="flex flex-col items-center justify-center h-64">
+           /* Loading State */
+           <div className="h-full flex flex-col items-center justify-center">
                <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
                <p className="text-slate-500">Loading live status...</p>
            </div>
         )}
-
-        <Footer />
       </main>
     </div>
   );
